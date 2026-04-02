@@ -1,30 +1,31 @@
 from flask import Flask, request, jsonify
 import joblib
+import os
 
 application = Flask(__name__)
 
-# Load the trained model into memory
+# Load model safely
 model = joblib.load('sentiment_model.joblib')
+
+@application.route('/')
+def home():
+    return "App is running!", 200
 
 @application.route('/predict', methods=['POST'])
 def predict():
-    # Parse the incoming JSON request
     data = request.get_json()
     text = data.get('text', '')
 
-    if not text: 
-        return jsonify({
-            'error': 'No text provided. Please send a JSON with a "text" key.'
-        }), 400
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
 
-    # Make a prediction
     prediction = model.predict([text])[0]
 
-    # Return the result
     return jsonify({
         'input_text': text,
         'sentiment_prediction': prediction
     })
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    application.run(host='0.0.0.0', port=port)
